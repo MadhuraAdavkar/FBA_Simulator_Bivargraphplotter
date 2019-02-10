@@ -1,0 +1,2 @@
+# FBA_Simulator_Biovargraphplotter
+This is R CODE for simulating demo FBA model: "TCA-analysis.lim"and generated output files.It gives all flux values in TCA-Analysis.fxr file.  It generates dotplot for optimal solution within range for each reaction in model and captures it in .pdf file. For two reactions ("MEMBRANETRASPORT12" and "GLYEMP12")it is generating pairwise plot and capturing in pdf file.
