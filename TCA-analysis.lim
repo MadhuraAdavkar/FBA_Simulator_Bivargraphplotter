@@ -1,0 +1,762 @@
+﻿! ########## DEmo FBA MODEL - TCA-cycle-analysis-LIM file 
+! ########## This model is a model to analyze TCA cycle and ATP generation
+! #######################################################################################################
+! ########  To run in R platform directly use the following commands in R in that sequence alpha-D-Galactose
+! #### require(LIM)
+! #### lim <- Setup("TCA-analysis.lim")
+! #### LP <- Linp(lim)
+! #### data.frame(t(LP$X))
+! #######################################################################################################
+! #######################################################################################################
+## REACTIONS
+MEMBRANETRANSPORT12	:	bDGLCxt + PEP -> bDG6P + PYR    	!	Glucose pull-in                	        		!ptsG
+MEMBRANETRANSPORT135	:	O2xt <-> O2				!	Oxygen transport					!UK2
+MEMBRANETRANSPORT136	:	CO2xt <-> CO2				!	Carbon dioxide transport				!UK3
+!MEMBRANETRANSPORT129	:	AKGxt  -> AKG				!	a-Ketoglutarate						!kgtP
+MEMBRANETRANSPORT119	:	HPO4xt  -> HPO4				!       Phospate transport
+MEMBRANETRANSPORT200	:	Hext	-> Hc				!       Hydrogen transport
+MEMBRANETRANSPORT201    :       H2Oxt  <-> H2O				!
+MEMBRANETRANSPORT107	:       AC -> ACxt				!	Acetate transport Metabolic By-Products Transport	!actP
+MEMBRANETRANSPORT205    :       ATPxt <-> ATP
+MEMBRANETRANSPORT206    :       ADP <-> ADPxt
+MEMBRANETRANSPORT207    :       NADPxt -> NADP
+MEMBRANETRANSPORT208	:       NADPH -> NADPHxt
+GLYEMP5	                :	bDG6P <-> F6P                   	!	Phosphoglucose isomerase-3        			!pgi
+GLYEMP9	                :	F6P + ATP -> FDP + ADP          	!	Phosphofructokinase	                		!pfkA
+GLYEMP12	        :	FDP <-> T3P1 + T3P2	                !	Fructose-1,6-bisphosphatate aldolase			!fbaA
+GLYEMP13	        :	T3P1 <-> T3P2				!	Triosphosphate Isomerase				!tpiA
+GLYEMP16	        :	T3P1 + HPO4 + NAD <-> NADH + 13PDG + Hc	!	Glyceraldehyde-3-phosphate dehydrogenase-C complex  	!gapC1C2
+GLYEMP17		:	13PDG + ADP <-> 3PG + ATP		!	Phosphoglycerate kinase					!pgk
+GLYEMP18		:	3PG <-> 2PG				!	Phosphoglycerate mutase 1				!gpmA
+GLYEMP20		:	2PG <-> PEP				!	Enolase							!eno
+GLYEMP22		:	PEP + ADP -> PYR + ATP			!	Pyruvate Kinase II					!pykA
+GLYEMP24		:	PYR + COA + NAD -> NADH + CO2 + ACCOA + Hc	!	Pyruvate dehydrogenase				!aceE,F,lpd
+TCA1			:	ACCOA + OA -> COA + CIT			!	Citrate synthase					!gltA
+TCA2			:	CIT <-> ICIT				!	Aconitase A						!acnA
+TCA4			:	ICIT + NADP <-> CO2 + NADPH + AKG + Hc	!	Isocitrate dehydrogenase				!icd
+TCA5			:	AKG + NAD + COA -> CO2 + NADH + SUCCOA + Hc   ! 2-Ketoglutarate dehyrogenase				!lpdA,sucAB,lpd
+TCA6			:	SUCCOA + ADP + HPO4 + Hc <-> ATP + COA + SUCC	!	Succinyl-CoA synthetase				!sucCD
+TCA71fm			:	2*SUCC -> 2*FUM + 4*Hc + 4*e		!	Membrane bound ETC					!sdhABCD
+TCA72m			:       Q + 4*Hc + 4*e -> QH24Hc4e               ! 	Membrane bound electron carrier Ubiquinol 
+TCA73fm			:       QH24Hc4e + O2 + 8*Hc -> Q + 2*H2O + 8*Hp !       ELectron release at the electron receiver end ( O2)     !cyoABCD
+TCA74m			:	MKH22Hc2e + FUM  -> MK + SUCC		!	Menaquinone linked ETC					!frdABCD
+TCA9			:       FUM + H2O <-> MAL + Hc			!	Fumerase A, B , C 					!fumA,B,C
+TCA12			:	MAL + NAD <-> NADH + OA	+ Hc		!	Malate dehydrogenase					!mdh
+TCA13			:	ICIT -> GLX + SUCC + Hc			!	Isocitrate lyase ( Glyoxalate shunt)			!aceA
+TCA14			:       ACCOA + GLX + H2O -> COA + MAL + Hc	!	Malate synthase A ( Glyoxalate shunt)			!aceB	
+PYRMET7			:	ACCOA + HPO4 <-> ACTP + COA		!	Phosphotransacetylase					!pta
+PYRMET8			:	ACTP + ADP <-> ATP + AC			!	Acetate kinase A					!ackA
+ANEPREAC3		:	MAL + NADP -> CO2 + NADPH + PYR	+ Hc	!	Malic enzyme (NADP)					!maeB
+ANEPREAC4		:	MAL + NAD -> CO2 + NADH + PYR + Hc	!	Malic enzyme (NAD)					!sfcA
+RESPIRATION1		:	NADH + 6*Hc + MK -> NAD + MKH22Hc2e + Hc + 4*Hp	!	NADH dehydrogenase 					!ndh
+RESPIRATION3		:	2*NADH + 8*Hc -> 2*NAD + 4*e + 2*Hc + 8*Hp	!	NADH dehydrogenase 				!nuo
+RESPIRATION4		:	4*Hc + 4*e + O2  -> 2*H2O 		!	Terminal oxidase 					!cyoAB, appBC
+RESPIRATION20		:	ADP + HPO4 + Hc + 3*Hp -> ATP + H2O + 3*Hc	! atpSynthase  F0F1					!atpADCDEFGH
+SUCCOAUTIL		:	SUCCOA -> SUCC + COA 			!	SUCCOA utilization in Aminoacid bio synthesis
+## END REACTIONS
+!########################################################################################################
+## MAXIMISE
+maxgrowth : RESPIRATION20
+!maxgrowth : MEMBRANETRANSPORT12
+## END MAXIMISE
+!########################################################################################################
+## INEQUALITIES
+MEMBRANETRANSPORT12 =[0,1]!bDGLCxt + PEP -> bDG6P + PYR
+!MEMBRANETRANSPORT129	> 0.1		!	AKG -> AKGxt
+SUCCOAUTIL		=   	[	0	,	0.1	]
+TCA13 < 0.6* TCA2
+PYRMET8	> 1
+##  END INEQUALITIES
+##########################################################################################################
+Hp	!       Proton in periplasmic region
+Hc	!	Cytosolic proton
+e	!	free electron
+HPO4	!	Phosphate
+GLC	!	a-D-Glucose
+aDG6P	!	alpha-D-Glucose-6-phosphate
+F6P	!	Fructose-6-phosphate
+FDP	!	Fructose-1,6-diphosphate
+T3P2	!	Dihydroxyacetonephosphate-1
+DHAP	!	Dihydroxyacetonephosphate-2
+T3P1	!	Glyceraldehyde-3-phosphate
+13PDG	!	1,3-bis-Phosphoglycerate
+3PG	!	3-Phosphoglycerate
+2PG	!	2-Phosphoglycerate
+PEP	!	Phosphoenolpyruvate
+ACCOA	!	Acetyl-CoA
+CIT	!	Citrate
+ACO	!	Cis-Aconitate
+ICIT	!	Isocitrate
+SUCCOA	!	SuccinateCoA
+SUCC	!	Succinate
+FUM	!	Fumarate
+MAL	!	Malate
+OA	!	Oxaloacetate
+ACAL	!	Acetaldehyde
+ACTP	!	Acetyl-phosphate
+ETH	!	Ethanol
+AC	!	Acetate
+LAC	!	D-Lactate
+FOR	!	Formate
+D6PGL	!	D-6-Phosphate-glucono-delta-lactone
+D6PGC	!	D-6-Phosphate-gluconate
+BCAA    	!	Branched Chain Amino Acid
+X5P	!	Xylulose-5-phosphate
+R5P	!	Ribose-5-phosphate
+E4P	!	Erythrose-4-phosphate
+GLX	!	Glyoxylate
+NADH	!	Nicotinamide-adenine-dinucleotide
+NADPH	!	Dihydronicotinamide-adenine-dinucleotide-phosphate-reduced
+HEXT	!	External-H+
+Q	!	Ubiquinone
+FADH	!	Flavin-adenine-dinucleotide-reduced
+ATP	!	Adenosine-triphosphate
+GL3P	!	Glycerol-3-phosphate
+bDGLC	!	b-D-Glucose
+OTHIO	!	Thioredoxin-oxidised-form
+RTHIO	!	Thioredoxin-reduced-form
+GLYCOGEN	!	Glycogen
+ADPGLC	!	ADP-Glucose
+GLAL	!	D-Glyceraldehyde
+2KD6PG	!	2-keto-3-deoxy-6-phospho-gluconate
+RL5P	!	Ribulose-5-phosphate
+SUC6P	!	Surose-6
+FRU	!	Fructose
+MELI	!	Melibiose
+LCTS	!	Lactose
+GLAC	!	alpha-D-Galactose
+bDGLAC	!	beta-D-Galactose
+GAL1P	!	Galactose-1-phosphate
+UDPG	!	UDP-Glucose
+UDPGAL	!	UDP-Galactose
+aDG1P	!	alpha-D-Glucose-1-phosphate
+DR1P	!	Deoxyribose-1-phosphate
+DR5P	!	Deoxyribose-5-phosphate
+TRE6P	!	Trehalase-6-phosphate
+bDG6P	!	b-D-Glucose-6-phosphate
+FUC	!	Fucose
+DIPEP  	!	Di-peptide
+FCL	!	Fuculose
+FCL1P	!	Fuculose-1-phosphate
+LACAL	!	Lactaldehyde
+12PPD	!	1,2-Propanediol
+LLAC	!	L-Lactate
+RMN	!	Rhamnose
+RML	!	Rhamnulose
+RML1P	!	Rhamnulose-1phosphate
+GLTL1P	!	Galacitol-1-Phosphate
+TAG6P	!	Tagatose-6-phosphate
+TAG16P	!	Tagatose-1,6-diphosphate
+ARAB	!	Arabinose
+RBL	!	Ribulose
+F1P	!	Fructose-1-phosphate
+MNT6P	!	Mannitol-6-phosphate
+MAN1P	!	Mannose-1-phosphate
+R1P	!	Ribose-1-phosphate
+RIB	!	Ribose
+GL	!	Glycerol
+SOR1P	!	Sorbose-1-phosphate
+GLT6P	!	Glucitol-6-hosphate
+NAGP	!	N-Acetylglucosamine
+GA6P	!	D-Glucosamine
+XYL	!	Xylose
+XUL	!	Xylulose
+GLCN	!	Gluconate
+MAN6P	!	Mannose-6-phosphate
+PYR	!	Pyruvate
+AKG	!	a-Ketoglutarate
+ASN	!	Asparagine
+GLU	!	Glutamate
+GLN	!	Glutamine
+ALA	!	Alanine
+VAL	!	Valine
+DALA	!	D-Alanine
+NAGLU	!	N-Acetyl-glutamate
+NAGLUYP	!	N-Acetyl-glutamyl-phosphate
+NAGLUSAL	!	N-Acetyl-glutamate-semialdehyde
+NAARON	!	N-a-Acetyl-ornithine
+ORN	!	Ornithine
+CITR	!	L-Citrulline
+ARGSUCC	!	L-Arginio-succinate
+ARG	!	Arginine
+AGM	!	Agmatine
+PTRC	!	Putrescine
+SPMD	!	Spermidine
+GABAL	!	g-aminobutyraldehyde
+GABA	!	4-Aminobutanoate
+SUCCSAL	!	Succinate-semialdehyde
+CO2	!	Carbondioxide
+CAP	!	Carbamoylphosphate
+OBUT	!	Oxobutyrate
+ABUT	!	2-Aceto-2-hydroxy-butyrate
+DHMVA	!	2,3-Dihydroxy-3-methyl-valerate
+OMVAL	!	Oxomethylvalerate
+ILE	!	Isoleucine
+ACLAC	!	Acetolactate
+DHVAL	!	Dihydroxy-isovalerate
+OIVAL	!	Oxoisovalerate
+CBHCAP	!	3-Carboxy-3-hydroxy-isocaproate
+IPPMAL	!	3-Isopropylmalate
+OICAP	!	2-Oxoisocaproate
+LEU	!	Leucine
+3DDAH7P	!	3-Deoxy-d-arabino-heptulosonate-7-phosphate
+DQT	!	3-Dehydroquinate
+DHSK	!	Dehydroshikimate
+SME	!	Shikimate
+SME5P	!	Shikimate-5-phosphate
+3PSME	!	3-Phosphate-shikimate
+CHOR	!	Chorisimate
+PHEN	!	Prephenate
+HPHPYR	!	Para-Hydroxy-phenyl-pyruvate
+TYR	!	Tyrosine
+PHPYR	!	Phenyl-pyruvate
+PHE	!	Phenylalanine
+AN	!	Antranilate
+NPRAN	!	N-5-phosphoribosyl-antranilate
+CPAD5P	!	1-O-Carboxyphenylamino-1-deoxyribulose-5-phosphate
+IGP	!	Indole-glycerol-phosphate
+TRP	!	Tryptophan
+PRPP	!	Phosphoribosyl-pyrophosphate
+PRBATP	!	Phosphoribosyl-ATP
+PRBAMP	!	Phosphoribosyl-AMP
+PRFP	!	Phosphoribosyl-formimino-AICAR-phosphate
+PRLP	!	Phosphoribulosyl-formimino-AICAR-phosphate
+DIMGP	!	D-Erythro-imidazoleglycerol-phosphate
+IMACP	!	Imidazole-acetyl-phosphate
+HISOLP	!	L-Histidinol-phosphate
+HISOL	!	Histidinol
+HIS	!	Histidine
+PHP	!	3-Phosphohydroxypyruvate
+3PSER	!	3-Phosphoserine
+GLY	!	Glycine
+SLF	!	Sulfate
+APS	!	Adenylyl-sulfate
+PAPS	!	3-Phosphoadenylyl-sulfate
+H2SO3	!	Sulfite
+H2S	!	Hydrogen-sulfide
+PAP	!	Adenosine-3',5'-diphosphate
+ASER	!	O-Acetylserine
+CYS	!	Cysteine
+BASP	!	B-Aspartyl-phosphate
+ASPSA	!	Aspartic-beta-semialdehyde
+HSER	!	Homoserine
+PHSER	!	O-Phospho-l-homoserine
+THR	!	Threonine
+2A3O	!	2-Amino-3-oxobutanoate
+D23PIC	!	2,3-Dihydro-dipicolinate
+PIP26DX	!	Delta-piperidine-2,6-dicarboxylate
+NS2A6O	!	N-Succinyl-2-amino-6-ketopimelate
+NS26DP	!	N-Succinyl-l,l-2,6-diaminopimelate
+D26PIM	!	L,l-2,6-Diamino-pimelate
+MDAP	!	Meso-diaminopimelate
+LYS	!	L-Lysine
+OSLHSER	!	O-Succinyl-l-homoserine
+LLCT	!	L-Cystathionine
+HCYS	!	Homocysteine
+SAH	!	S-Adenosyl-homocystine
+MET	!	Methionine
+SAM	!	S-Adenosyl-methionine
+GLUP	!	Glutamyl-phosphate
+GLUGSAL	!	L-Glutamate-gamma-semialdehyde
+PR5C	!	Pyrroline-5-Carboxylase
+PRO	!	Proline
+5MTRP	!	S5-Methyl-5-thio-DIPEPD-ribose-1-phosphate
+5MTA	!	5-Methylthioadenosine
+5MTR	!	5-Methylthio-D-ribose
+CADV	!	Cadaverine
+DSER	!	D-Serine
+5MTR1P	!	5-Methylthio-5-deoxy-D-ribulose-1-phosphate
+DKMPP	!	2,3-Diketo-5-methylthio-1-phosphopentane
+KMB	!	A-keto-g-methiobutyrate
+DSAM	!	Decarboxylated-adenosylmethionine
+ASP	!	Aspartate
+AICAR	!	5-Phosphate-ribosyl-5-amino-4-imidazole-carboxamide
+AMP	!	Adenosine-monophosphate
+PRAM	!	5-Phosphate-b-D-ribosyl-amine
+GAR	!	5-Phosphate-ribosyl-glycineamide
+FGAR	!	5-Phosphoribosyl-n-formylglycineamide
+FGAM	!	5-Phosphoribosyl-n-formylgycineamidine
+AIR	!	5-Phosphoribosyl-5-aminoimidazole
+NCAIR	!	5'-Phosphoribosyl-5-carboxyaminoimidazole
+CAIR	!	5-Phosphoribosyl-5-aminoimidazole-4-carboxylate
+SAICAR	!	5-Phosphoribosyl-4-(N-succinocarboxyamide)-5-amino-imidazole
+PRFICA	!	5-Phosphate-ribosyl-formamido-4-imidazole-carboxamide
+IMP	!	Inosine-monophosphate
+XMP	!	Xantosine-monophosphate
+GMP	!	Guanosine-monophosphate
+ASUC	!	Adenilsuccinate
+CAASP	!	Carbamoyl-aspartate
+DOROA	!	Dihydroorotic-acid
+OROA	!	Orotic-acid
+OMP	!	Orotidylate
+UMP	!	Uridine-monophosphate
+UDP	!	Uridine-diphoaphate
+UTP	!	Uridine-triphosphate
+CTP	!	Cytidine-triphosphate
+IDP	!	Inosine-diphosphate
+ITP	!	Inosine-triphosphate
+ADP	!	Adenosine-diphosphate
+DATP	!	Deoxyadenosine-triphosphate
+DADP	!	Deoxyadenosine-diphosphate
+DAMP	!	Deoxyadenosine-monophosphate
+DA	!	Deoxyadenosine
+DIN	!	Deoxyinosine
+ADN	!	Adenosine
+AD	!	Adenine
+INS	!	Inosine
+HYXN	!	Hypoxanthine
+XAN	!	Xanthine
+XTSN	!	Xanthosine
+GN	!	Guanine
+GSN	!	Guanosine
+GDP	!	Guanosine-diphosphate
+DGTP	!	Deoxyguanosine-triphosphate
+DGDP	!	Deoxyguanosine-diphosphate
+DGMP	!	2-Deoxy-guanosine-5-phosphate
+DG	!	Deoxyguanosine
+URI	!	Uridine
+URA	!	Uracil
+CYTS	!	Cytosine
+CYTD	!	Cytidine
+CMP	!	Cytidine-monophosphate
+CDP	!	Cytidine-diphosphate
+DCTP	!	Deoxycytidine-triphosphate
+DCDP	!	Deoxycytidine-diphosphate
+DCMP	!	Deoxycytidine-monophosphate
+DC	!	Deoxycytidine
+DU	!	Deoxyuridine
+DUMP	!	Deoxyuridine-monophosphate
+DUDP	!	Deoxyuridine-diphosphate
+DUTP	!	Deoxyuridine-triphosphate
+DTMP	!	Thymidine-monophosphate
+DTDP	!	Thymidine-diphosphate
+DTTP	!	Thymidine-triphosphate
+DT    	!	Thymidine
+THY	!	Thymine
+SER	!	Serine
+4HBZ	!	4-Hydroxybenzoate
+O4HBZ	!	3-Octaprenyl-4-hydroxybenzoate
+2OPPP	!	2-Octaprenylphenol
+2O6H	!	2-Octaprenol-6-hydroxyphenol
+2OPMP	!	2-Octaprenyl-6-methoxyphenol
+2OPMB	!	2-Octaprenyl-6-methoxy-1,4-benzoquinone
+2OPMMB	!	2-Octaprenyl-3-methyl-6-methoxy-1,4-benzoquinone
+2OMHMB	!	2-Octaprenyl-3-methyl-5-hydroxy-6-methoxy-1,4-benzoquinone
+QH2	!	Ubiquinol
+H2    	!	Hydrogen
+ICHOR	!	IsochorismatDIPEPe
+SHCHC	!	2-Succinyl-6-hydroxy-2,4-cyclohexadiene-1-carboxylate
+OSB	!	O-Succinylbenzoate
+OSBCOA	!	O-Succinylbenzoyl-CoA
+DHNCOA	!	1,4-Dihydroxy-2-naphthoylCoA
+DHNA	!	1,4-Dihydroxy-2-naphthoate
+DMK	!	Demethylmenaquinone
+MK	!	Menaquinone
+MKOL	!	Menaquinol
+GTP	!	Guanosine-triphosphate
+D6RP5P	!	2,5-Diamino-6-(ribosylamino)-4-(3H)-pyrimidinone-5'-phosphate
+A6RP5P	!	5-Amino-6-(ribosylamino)-2,4-(1H,3H)-pyrimidinedione-5'-phosphate
+A6RP5P2	!	5-Amino-2,6-dioxy-4-(5'-phosphoribitylamino)pyrimidine
+A6RP	!	5-Amino-6-ribitylamino-2,4(1H,3H)-pyrimidinedione
+DB4P	!	3,4-Dihydroxy-2-butanone-4-phosphate
+A8RL	!	6,7-Dimethyl-8-(1-D-ribityl)lumazine
+RIBFLV	!	Riboflavin
+FMN	!	Flavin-mononucleotide
+FAD	!	Flavin-adenine-dinucleotide
+THF	!	Tetrahydrofolate
+METTHF	!	5,10-Methylene-tetrahydrofolate
+MTHF	!	5-Methyl-tetrahydrofolate
+METHF	!	5,10-Methenyl-tetrahydrofolate
+FTHF	!	10-formyl-tetrahydrofolate
+DHF	!	Dihydrofolate
+AHTD	!	2-Amino-4-hydroxy-6-(erythro-1-2-3-trihydroxypropyl)-dihydropteridine-p
+DHP	!	Dihydroneopterin
+AHHMP	!	2-Amino-4-hydroxy-6-hydroxymethyl-dihydropteridine
+AHHMD	!	2-Amino-4-hydroxy-6-hydroxymethyl-dihydropteridine-pp
+ADCHOR	!	4-Amino-4-deoxychorismate
+PABA	!	Para-Aminobenzoic-acid
+DHPT	!	7,8-Dihydropteroate
+AKP	!	a-Ketopantoate
+PANT	!	Pantoate
+PNTO	!	Pantothenate
+4PPNTO	!	4'-Phosphopantothenate
+4PPNCYS	!	4'-Phosphopantothenoylcysteine
+4PPNTE	!	4'-Phosphopantetheine
+DPCOA	!	Dephosphocoenzyme-A
+COA	!	Coenzyme-A
+ACP	!	Acyl-carrier-protein
+bALA	!	b-Alanine
+ISUCC	!	a-Iminosuccinate
+QA	!	Quinolinate
+NAMN	!	Nicotinic-acis-mononucleotide
+NAAD	!	Nicotinic-acid-adenine-dinucleotide
+NAD	!	Nicotinamide
+NADP	!	Nicotinamide-dinucleotide-phosphate
+NMN	!	Nicotinamide-mononucleatide
+NAM	!	Nicotinamide
+NAC	!	Nicotinic-acid
+GTRNA	!	L-Glutamyl-tRNA(glu)
+GSA	!	Glutamate-1-semialdehyde
+ALAV	!	D-Aminolevulinate
+PBG	!	Probilinogen-III
+HMB	!	Hydroxymethylbilane
+UPRG	!	Uroporphyrinogen-III
+PC2	!	Percorrin-2
+PC1	!	Percorrin-1
+SHCL	!	Sirohydrochlorin
+SHEME	!	Siroheme
+CPP	!	Coproporphyrinogen-III
+PPHG	!	Protoporphyrinogen
+PPIX	!	Protoporphyrin-IX
+PTH	!	Protoheme
+HO	!	Heme-O
+AONA	!	8-Amino-7-oxononanoate
+DANNA	!	7,8-Diaminononanoate
+DTB	!	Dethiobiotin
+BT	!	Biotin
+GC	!	L-g-Glutamylcysteine
+RGT	!	Reduced-glutathione
+AHM	!	4-Amino-5-hydroxymethyl-2-methylpyrimidine
+AHMP	!	4-Amino-5-hydroxymethyl-2-methylpyrimidine-phosphate
+AHMPP	!	4-Amino-5-hydroxymethyl-2-methylpyrimidine-pyrophosphate
+DTP	!	1-Deoxy-d-threo-2-pentulose
+THZ	!	4-Methyl-5-(beta-hydroxyethyl)thiazole
+THZP	!	4-Methyl-5-(beta-hydroxyethyl)thiazole-phosphate
+THMP	!	Thiamine-phosphate
+THIAMIN	!	Thiamin
+TPP	!	Thiamine-pyrophosphate
+ER4P	!	Erythronate-4-phosphate
+OHB	!	3-Hydroxy-4-phospho-hydroxy-alpha-ketobutyrate
+PHT	!	Phospho-hydroxy-threonine
+AMO4B	!	2-amino-3-oxo-4-phosphonooxybutyrate, L-2-amino-3-oxo-4-phosphonooxybutyrate
+AHAP	!	Aminohydroxyacetone phosphate
+P5P	!	Pyridoxine-5'-phosphate
+PL5P	!	Pyridoxal-5'-phosphate
+PDLA5P	!	Pyridoxamine-5-phosphate
+4HLT	!	4-Hydroxy-l-tyrosine
+PYRDX	!	Pyridoxine
+PL	!	Pyridoxal
+PDLA	!	Pyridoxamine
+SEPHCHC	!	2-succinyl-5-enolpyruvyl-6-hydroxy-3-cyclohexene-1-carboxylate
+23DHDHB	!	2,3-Dihydo-2,3-dihydroxybenzoate
+23DHB	!	2,3-Dihydroxybenzoate
+23DHBA	!	2,3-Dihydroxybenzoyl-adenylate
+SERA	!	L-Seryl-adenylate
+ENTER	!	Enterochelin
+OGT	!	Oxidized-glutothione
+DHPP	!	Dihydroneopterin-phosphate
+HBA	!	4-Hydroxy-benzyl-alcohol
+CHCOA	!	6-Carboxyhexanoyl-coa
+DX5P	!	Deoxyxylulose-5-phosphate
+SAMOB	!	S-Adenosyl-4-methylthio-2-oxobutanoate
+MALCOA	!	Malonyl-CoA
+MALACP	!	Malonyl-ACP
+ACACP	!	Acetyl-ACP
+C120ACP !  	!	Some Fattyacid
+C141ACP	!	B-Hydroxymyristic-acid
+C140    !	!	Some Fattyacid
+C160    !	!	Some Fattyacid
+C180    !	!	Some Fattyacid
+C141    !	!	Some Fattyacid
+C181ACP	!	cis-Vaccenic-acid
+C140ACP	!	Myristic-acid
+C160ACP	!	Palmitic-acid
+C161ACP	!	Palmitoleic-acid
+23DACOA	!	2,3-Dehydroacyl-CoA
+OACOA	!	3-Oxoacyl-CoA
+AACCOA	!	Acetoacetyl-CoA
+ACOA	!	Acyl-CoA
+LCCA	!	Long-chain-carboxylic-acid
+HACOA	!	Hydroxyacyl-CoA
+AGP	!	1-Acylglycerol-3-phosphate
+DGR	!	D-1,2-Diacylglycerol
+CDPDG	!	CDP-1,2-Diacylglycerol
+PS	!	Phosphatidyl-serine
+PE	!	Phosphatidyl-ethanolamine
+PGP	!	L-1-Phoshatidyl-glycerol-phosphate
+PG	!	Phosphatidyl-glycerol
+CL	!	Cardiolypin
+IPPP	!	Isopentyl-pyrophosphate
+DMPP	!	Dimethylallyl-pyrophosphate
+GPP	!	Trans-Geranyl-pyrophosphate
+FPP	!	Trans-Farnesyl-pyrophosphate
+OPP	!	Trans-Octaprenyl-pyrophosphate
+UDPP	!	Undecaprenyl
+S7P	!	Sedo-Heptulose
+! C-----ACP	!	CH3-(CH2)x-CO-CH2-CO-S-ACP
+PA	!	Phosphatidyl-acid
+GA1P	!	Glucosamine-1-phosphate
+UDPNAG	!	UDP-N-actyl-glucosamine
+UDPG2AA	!	UDP-3-O-(3-hydroxytetradecanoyl)-N-acetylglucosamine
+UDPG2A	!	UDP-3-O-(3-hydroxytetradecanoyl)glucosamine
+UDPG23A	!	UDP-2,3-bis(3-hydroxytetradecanoyl)glucosamine
+LIPX	!	Lipid-X
+INDOLE        	!
+DISAC1P	!	Lipid-A-disaccharide
+LIPIV	!	Lipid-IV(A)
+KDOLIPIV	!	(KDO)-lipid-IV(A)
+K2LIPIV	!	(KDO(2))-lipid-IV(A)
+LIPA	!	(KDO(2))-lipid-A-Endoxin
+CMPKDO	!	CMP-2-keto-3-deoxyoctanoate
+KDO	!	2-Dehydro-3-deoxy-D-octonate
+A5P	!	D-Arabinose
+MLT6P        	!	Maltose-6-Phosphate
+CDPETN	!	CDP-Ethanolamine
+ADPHEP	!	ADP-Mannoheptose
+LPS	!	Lippolysaccharide
+UDPNAGEP	!	UDP-N-acetyl-3-O-(1-carboxyvinyl)-D-glucosamine
+UDPNAM	!	UDP-N-acetyl-D-muramate
+DGLU	!	D-Glutamate
+UDPNAMA	!	UDP-N-acetylmuramoyl-L-alanine
+UDPNAMAG	!	UDP-N-acetylmuramoyl-L-alanyl-D-glutamate
+UNAGD	!	UDP-N-acetylmuramoyl-L-alanyl-D-glutamyl-meso-2,6-diaminoheptanedioate
+AA	!	D-Alanyl-D-alanine
+UNAGDA	!	UDP-N-acetylmuramoyl-L-alanyl-D-glutamyl-meso-2,6-diaminoheptanedioate-D-alanyl-D-alanine
+PEPTIDO	!	Peptidoglycan
+PEPT   	!	Peptide
+KDOP	!	2-Dehydro-3-deoxy-D-octonate-8-phosphate
+UNPTDO	!	UDP-N-acetylmuramoyl-L-alanyl-D-glutamyl-meso-2,6-diaminoheptanedioate-D-alanyl-D-alaninediphosphoundecaprenol
+NH3	!	Ammonia
+NA	!	Sodium
+K      	!	Potassium
+O2	!	Oxygen
+H2O2         	!	Hydrogen Peroxide
+PI	!	Phosphate
+PPI	!	Pyrophosphate
+UREA	!	Urea
+OAHSER	!	O-Acetyl-L-homoserine
+SLA	!	Sialic
+NAMAN	!	N-Acetylneuraminate
+FRDX	!	Oxidized
+FRDXH	!	Reduced
+MTHGXL	!	Methylglyoxal
+LIPID1	!	LIPID-type1-considered as part of biomass representation
+LIPID2	!	LIPID-type2-considered as part of biomass representation
+OPEP     	!	Oligopeptide
+PROTEIN 	!
+DNA     	!
+BM     	!	Biomass
+IPRP        	!	Engineered Isopropanol product
+AAC	!	Engineered Isopropanol product
+ACETONE	!	Engineered Isopropanol product
+ISOBUTANOL	!	Engineered Isopropanol product
+ISOBUTANAL	!	Engineered Isopropanol product
+CHOL	!	Choline
+BETALD	!	Betaine Aldehyde
+BET 	!	Betaine
+DEOXY5P	!	1-deoxy-D-xylulose 5-phosphate
+2CME4P	!	2-C-methyl-D-erythritol-4-phosphate
+4CDPME	!	4-(cytidine 5'-diphospho)-2-C-methyl-D-erythritol
+2P4CDPME !	2-phospho-4-(cytidine 5'-diphospho)-2-C-methyl-D-erythritol
+2CME24cdP!	2-C-methyl-D-erythritol-2,4-cyclodiphosphate
+1h2MBP !	1-hydroxy-2-methyl-2-(E)-butenyl 4-diphosphate
+H2O !		Water
+UDMP !		Undecaprenyl (mono) phosphate
+HCO3 !		Bicarbonate
+GLNACLAGDGDapDAla ! GlcNAc-1,6-anhMurNAc-L-Ala-γ-D-Glu-DAP-D-Ala
+NAGNAM	!	N-acetyl-β-D-glucosamine(anhydrous)-N-acetylmuramate
+LADGdapDAla !	L-alanyl-D-γ-glutamyl-meso-2,6-diaminopimeloyl-D-alanine
+LADGdapD !	L-Ala-γ-D-Glu-diaminopimelate
+LADG !		 L-alanine-D-glutamate
+TSCPSCYS !	a [ThiI sulfur-carrier protein]-S-sulfanylcysteine
+CATSCP	!	a carboxy-adenylated-[ThiS sulfur-carrier protein]
+TCATP	!	a thiocarboxy-adenylated-[ThiS-Protein]
+TSCP	!	a ThiI sulfur-carrier protein
+2IMA	!	2-iminoacetate
+4MP	!	4-methylphenol
+TT	!	thiazole tautomer
+AMY	!	Amylose(n)
+AMY2	!	Amylose(n+1)
+LD	!	Limit dextrin
+KDO8P	!	2-Dehydro-3-deoxy-D-octonate-8-phosphate
+K2LLIP	!	!(KDO(2))-lauryl lipid-IV(A)
+HPLIPA	!	Heptulosyl-(KDO(2))-lipid-A
+HP2LIPA	!	Heptulosyl-heptlosyl-(KDO(2))-lipid-A
+GHP2LIPA !	Glucosyl-Heptulosyl-heptlosyl-(KDO(2))-lipid-A
+GHP2LIPAP !	Glucosyl-Heptulosyl-heptlosyl-(KDO(2))-lipid-A-phosphate
+GHP3LIPAP !	Glucosyl-(heptlosyl)3-(KDO(2))-lipid-A-phosphate
+GHP3LIPAPP !	Glucosyl-(heptlosyl)3-(KDO(2))-lipid-A-bisphosphate
+GalGHP3LIPAPP ! Galactosyl-Glucosyl-(heptlosyl)3-(KDO(2))-lipid-A-bisphosphate
+GalG2HP3LIPAPP	!	Galactosyl-(Glucosyl)2-(heptlosyl)3-(KDO(2))-lipid-A-bisphosphate
+GalG3HP3LIPAPP	!	Galactosyl-(Glucosyl)3-(heptlosyl)3-(KDO(2))-lipid-A-bisphosphate
+ACTACACP	!	Aceto-acetyl-ACP
+C16ACP	!	a palmitoyl-ACP
+C12ACP	! 	a myristoyl-ACP
+C14ACP	!	a lauryl-ACP
+ACGL3P	!	Acyl-glycerol-3-phosphate
+AACP	!	apo-ACP
+ETHAM	!	Ethanolamine
+SH	!	Sulfanyl acceptor
+UNSH	! 	unsufurylated sulfanyl acceptor
+MME	!	Methyl-malonyl-ester
+PIMACP	!	Pimelyl-ACP
+MTOH	!	methanol
+
+## END COMPONENTS
+! ########## MODEL  EXTERNALS - ECOLI_K12_1255_derivative – Version 1.0 - 12/01/2011
+##  EXTERNALS
+AMPxt
+ARABxt
+DHAxt
+FRUxt
+FUCxt
+GLTLxt
+GLACxt
+GLTxt
+GLCNxt
+GLCxt
+GLxt
+LACxt
+MLTxt
+MNTxt
+MANxt
+MELIxt
+NAG
+RMNxt
+RIBxt
+SUCxt
+TRExt
+XYLxt
+ALAxt
+ARGxt
+ASNxt
+ASPxt
+BCAAxt
+CYSxt
+DALAxt
+DSERxt
+GLYxt
+MDAPxt
+GABAxt
+GLUxt
+GLNxt
+HISxt
+ILExt
+LEUxt
+LYSxt
+METxt
+ORNxt
+PHExt
+PROxt
+PTRCxt
+SERxt
+SPMDxt
+THRxt
+TRPxt
+TYRxt
+VALxt
+DIPEPxt
+OPEPxt
+PEPTxt
+URAxt
+NMNxt
+CYTSxt
+ADxt
+GNxt
+HYXNxt
+XTSNxt
+XANxt
+URIxt
+INSxt
+DGxt
+DAxt
+DCxt
+DUxt
+DTxt
+ADNxt
+GSNxt
+CYTDxt
+DINxt
+ACxt
+FORxt
+ETHxt
+SUCCxt
+PYRxt
+NH3xt
+Kxt
+SLFxt
+PIxt
+GL3Pxt
+TPPxt
+FUMxt
+MALxt
+C140xt
+C160xt
+C180xt
+AKGxt
+NAxt
+PNTOxt
+SLAxt
+O2xt
+CO2xt
+UREAxt
+GLALxt
+ACALxt
+NADxt
+NACxt
+C120ACPxt
+C140ACPxt
+C141ACPxt
+C160ACPxt
+C161ACPxt
+CTPxt
+!CHORxt
+THFxt
+CADVxt
+SAMxt
+PEPTIDOxt
+K2LIPIVxt
+IPRPxt
+BMxt
+PExt
+CLxt
+ISOBUTANOLxt
+CHOLxt
+SHEMExt
+MKxt
+MKOLxt
+HCO3xt
+4HBZxt
+H2O2xt
+HBAxt
+GLNACLAGDGDapDAlaxt
+NAGNAMxt
+LADGxt
+THZxt
+TSCPxt
+TSCPSCYSxt
+4MPxt
+DX5Pxt
+AMYxt
+LDxt
+CDPETNxt
+bDGLCxt
+aDG6Pxt
+bDG6Pxt
+C12ACPxt
+C14ACPxt
+C16ACPxt
+ETHAMxt
+AACPxt
+Qxt
+SHxt
+UNSHxt
+MTOHxt
+SAHxt
+ACPxt
+SAMOBxt
+FADHxt
+HPO4xt
+Hext
+H2Oxt
+F6Pxt
+PEPxt
+ADPxt
+ATPxt
+FDPxt
+NADHxt
+NADPHxt
+NADPxt
+ACTPxt
+##  END EXTERNALS
+
